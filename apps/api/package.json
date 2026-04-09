@@ -1,0 +1,26 @@
+{
+  "name": "@ziply/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.0",
+    "@fastify/multipart": "^9.0.0",
+    "archiver": "^7.0.0",
+    "fastify": "^5.2.0",
+    "piscina": "^4.8.0",
+    "sharp": "^0.33.0",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.0",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
