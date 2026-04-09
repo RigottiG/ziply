@@ -18,7 +18,7 @@ const app = new digitalocean.App("ziply-app", {
           branch: "main",
           deployOnPush: true,
         },
-        instanceSizeSlug: "basic-xs",
+        instanceSizeSlug: "basic-s",
         instanceCount: 1,
         httpPort: 3001,
         envs: [
