@@ -21,7 +21,6 @@ const app = new digitalocean.App("ziply-app", {
         instanceSizeSlug: "basic-s",
         instanceCount: 1,
         httpPort: 3001,
-        sourceDir: "/",
         dockerfilePath: "Dockerfile",
         envs: [
           {
