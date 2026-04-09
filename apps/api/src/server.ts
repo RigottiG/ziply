@@ -19,7 +19,7 @@ app.register(multipart, {
   },
 });
 
-app.register(jobRoutes);
+app.register(jobRoutes, { prefix: "/api" });
 
 app.get("/health", async () => ({ status: "ok" }));
 
