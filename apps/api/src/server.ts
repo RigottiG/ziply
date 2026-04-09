@@ -1,6 +1,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import multipart from '@fastify/multipart'
+import { jobRoutes } from './routes/jobs.js'
 
 const app = Fastify({ logger: true })
 
@@ -11,6 +12,8 @@ app.register(multipart, {
     files: 100,
   },
 })
+
+app.register(jobRoutes)
 
 app.get('/health', async () => ({ status: 'ok' }))
 
