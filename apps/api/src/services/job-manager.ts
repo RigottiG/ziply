@@ -68,7 +68,7 @@ async function processJob(
 
     job.images[index].status = result.error ? 'error' : 'done'
     job.images[index].compressedSize = result.compressedSize
-    job.images[index].compressedBuffer = result.compressedBuffer
+    job.images[index].compressedBuffer = result.error ? null : Buffer.from(result.compressedBuffer)
     job.images[index].error = result.error
   })
 
