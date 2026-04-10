@@ -1,25 +1,14 @@
 export type ImageFormat = 'jpeg' | 'webp' | 'png'
 
+export type ImageStatus = 'uploading' | 'pending' | 'compressing' | 'done' | 'error'
+
 export interface ImageProgress {
   filename: string
-  status: 'pending' | 'compressing' | 'done' | 'error'
+  status: ImageStatus
   originalSize: number
   compressedSize: number | null
   error: string | null
-}
-
-export interface JobStatus {
-  id: string
-  status: 'uploading' | 'processing' | 'done' | 'error'
-  progress: ImageProgress[]
-  totalOriginalSize: number
-  totalCompressedSize: number
-  downloadUrl: string | null
-}
-
-export interface CompressOptions {
-  format: ImageFormat
-  quality: number
+  uploadProgress: number
 }
 
 export const MAX_FILES = 100
