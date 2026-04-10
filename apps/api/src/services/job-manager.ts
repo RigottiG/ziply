@@ -16,7 +16,6 @@ async function ensureDir(dir: string) {
 }
 
 export async function createJob(
-  files: Array<{ filename: string; buffer: Buffer; size: number }>,
   format: ImageFormat,
   quality: number
 ): Promise<Job> {
@@ -24,41 +23,46 @@ export async function createJob(
   const jobDir = path.join(TMP_ROOT, id)
   await ensureDir(jobDir)
 
-  const images: ImageEntry[] = files.map((f) => ({
-    filename: f.filename,
-    status: 'pending',
-    originalSize: f.size,
-    compressedSize: null,
-    compressedBuffer: null,
-    error: null,
-  }))
+  quality = Math.min(90, Math.max(70, quality))
 
   const job: Job = {
     id,
     status: 'processing',
     format,
     quality,
-    images,
+    images: [],
     createdAt: Date.now(),
     zipPath: null,
+    finalized: false,
   }
 
   jobs.set(id, job)
-  processJob(job, files).catch(() => {
-    job.status = 'error'
-  })
   scheduleCleanup(id)
 
   return job
 }
 
-async function processJob(
-  job: Job,
-  files: Array<{ filename: string; buffer: Buffer; size: number }>
-) {
-  const promises = files.map(async (file, index) => {
-    job.images[index].status = 'compressing'
+export async function addFileToJob(
+  jobId: string,
+  file: { filename: string; buffer: Buffer; size: number }
+): Promise<{ index: number; entry: ImageEntry }> {
+  const job = jobs.get(jobId)
+  if (!job) throw new Error('Job not found')
+  if (job.finalized) throw new Error('Job already finalized')
 
+  const entry: ImageEntry = {
+    filename: file.filename,
+    status: 'compressing',
+    originalSize: file.size,
+    compressedSize: null,
+    compressedBuffer: null,
+    error: null,
+  }
+
+  const index = job.images.length
+  job.images.push(entry)
+
+  try {
     const result = await compressImage({
       buffer: file.buffer,
       filename: file.filename,
@@ -66,24 +70,37 @@ async function processJob(
       quality: job.quality,
     })
 
-    job.images[index].status = result.error ? 'error' : 'done'
-    job.images[index].compressedSize = result.compressedSize
-    job.images[index].compressedBuffer = result.error ? null : Buffer.from(result.compressedBuffer)
-    job.images[index].error = result.error
-  })
+    entry.status = result.error ? 'error' : 'done'
+    entry.compressedSize = result.compressedSize
+    entry.compressedBuffer = result.error ? null : Buffer.from(result.compressedBuffer)
+    entry.error = result.error
+  } catch (err: any) {
+    entry.status = 'error'
+    entry.error = err.message || 'Compression failed'
+  }
 
-  await Promise.all(promises)
+  return { index, entry }
+}
+
+export async function finalizeJob(jobId: string): Promise<Job> {
+  const job = jobs.get(jobId)
+  if (!job) throw new Error('Job not found')
+  if (job.finalized) throw new Error('Job already finalized')
+
+  job.finalized = true
 
   const succeeded = job.images.filter((img) => img.status === 'done')
   if (succeeded.length === 0) {
     job.status = 'error'
-    return
+    return job
   }
 
   const zipPath = path.join(TMP_ROOT, job.id, 'output.zip')
   await buildZip(succeeded, zipPath)
   job.zipPath = zipPath
   job.status = 'done'
+
+  return job
 }
 
 async function buildZip(images: ImageEntry[], zipPath: string): Promise<void> {
