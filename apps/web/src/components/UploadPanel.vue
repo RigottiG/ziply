@@ -21,7 +21,7 @@ const emit = defineEmits<{
 
 <template>
   <div class="flex flex-col gap-3">
-    <template v-if="jobStatus === 'idle' || jobStatus === 'uploading'">
+    <template v-if="jobStatus === 'idle'">
       <DropZone @files="emit('files', $event)" @error="emit('error', $event)" />
     </template>
 
@@ -30,10 +30,6 @@ const emit = defineEmits<{
       <div class="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-1">
         <FileProgress v-for="img in images" :key="img.filename" :image="img" />
       </div>
-    </template>
-
-    <template v-if="jobStatus === 'uploading'">
-      <div class="text-terminal-muted text-sm text-center">Uploading…</div>
     </template>
 
     <template v-if="errorMessage">

@@ -30,7 +30,7 @@ function onError(msg: string) {
   errorMessage.value = msg
 }
 
-function onCompress() {
+function onRecompress() {
   if (selectedFiles.value.length > 0) {
     reset()
     submitJob(selectedFiles.value, format.value, quality.value)
@@ -46,7 +46,8 @@ function onCompress() {
           v-model:format="format"
           v-model:quality="quality"
           :disabled="jobStatus === 'uploading' || jobStatus === 'processing'"
-          @compress="onCompress"
+          :show-recompress="jobStatus === 'done' && selectedFiles.length > 0"
+          @recompress="onRecompress"
         />
       </div>
       <div class="flex-1 min-w-0">

@@ -7,12 +7,13 @@ const props = defineProps<{
   format: ImageFormat
   quality: number
   disabled: boolean
+  showRecompress: boolean
 }>()
 
 const emit = defineEmits<{
   'update:format': [value: ImageFormat]
   'update:quality': [value: number]
-  compress: []
+  recompress: []
 }>()
 </script>
 
@@ -26,9 +27,9 @@ const emit = defineEmits<{
 
     <QualitySlider :model-value="quality" @update:model-value="emit('update:quality', $event)" />
 
-    <div class="mt-auto">
+    <div v-if="showRecompress" class="mt-auto">
       <button
-        @click="emit('compress')"
+        @click="emit('recompress')"
         :disabled="disabled"
         :class="[
           'w-full py-2.5 rounded-sm font-bold text-sm uppercase tracking-wider transition',
@@ -37,7 +38,7 @@ const emit = defineEmits<{
             : 'bg-terminal-green text-terminal-bg hover:brightness-110',
         ]"
       >
-        ▶ Compress
+        ⟳ Re-compress
       </button>
     </div>
   </div>
