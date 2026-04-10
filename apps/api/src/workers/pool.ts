@@ -17,7 +17,7 @@ const pool = new Piscina({
         filename: path.resolve(__dirname, "../../dist/workers/compress.js"),
       }),
   minThreads: 1,
-  maxThreads: 3,
+  maxThreads: 6,
 });
 
 export async function compressImage(
