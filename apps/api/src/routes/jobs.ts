@@ -1,37 +1,64 @@
 import type { FastifyInstance } from 'fastify'
 import { createReadStream } from 'fs'
 import { stat } from 'fs/promises'
-import { createJob, getJobPublic, getJob, deleteJob } from '../services/job-manager.js'
+import { createJob, addFileToJob, finalizeJob, getJobPublic, getJob, deleteJob } from '../services/job-manager.js'
 
 export async function jobRoutes(app: FastifyInstance) {
   app.post('/jobs', async (req, reply) => {
-    const parts = req.parts()
-    const files: Array<{ filename: string; buffer: Buffer; size: number }> = []
-    let format: 'jpeg' | 'webp' | 'png' = 'jpeg'
-    let quality = 80
+    const body = req.body as { format?: string; quality?: string }
+    const format = (body.format || 'jpeg') as 'jpeg' | 'webp' | 'png'
+    const quality = Number(body.quality || 80)
 
-    for await (const part of parts) {
-      if (part.type === 'file') {
-        const buffer = await part.toBuffer()
-        files.push({
-          filename: part.filename,
-          buffer,
-          size: buffer.length,
-        })
-      } else {
-        if (part.fieldname === 'format') format = part.value as any
-        if (part.fieldname === 'quality') quality = Number(part.value)
-      }
+    if (!['jpeg', 'webp', 'png'].includes(format)) {
+      return reply.code(400).send({ error: 'Invalid format' })
     }
 
-    if (files.length === 0) {
-      return reply.code(400).send({ error: 'No files uploaded' })
-    }
-
-    quality = Math.min(90, Math.max(70, quality))
-
-    const job = await createJob(files, format, quality)
+    const job = await createJob(format, quality)
     return reply.code(201).send({ jobId: job.id })
+  })
+
+  app.post('/jobs/:id/files', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const data = await req.file()
+
+    if (!data) {
+      return reply.code(400).send({ error: 'No file provided' })
+    }
+
+    const buffer = await data.toBuffer()
+
+    try {
+      const { entry } = await addFileToJob(id, {
+        filename: data.filename,
+        buffer,
+        size: buffer.length,
+      })
+
+      return reply.code(200).send({
+        filename: entry.filename,
+        status: entry.status,
+        originalSize: entry.originalSize,
+        compressedSize: entry.compressedSize,
+        error: entry.error,
+      })
+    } catch (err: any) {
+      return reply.code(400).send({ error: err.message })
+    }
+  })
+
+  app.post('/jobs/:id/finalize', async (req, reply) => {
+    const { id } = req.params as { id: string }
+
+    try {
+      const job = await finalizeJob(id)
+      return reply.code(200).send({
+        id: job.id,
+        status: job.status,
+        downloadUrl: job.status === 'done' ? `/jobs/${job.id}/download` : null,
+      })
+    } catch (err: any) {
+      return reply.code(400).send({ error: err.message })
+    }
   })
 
   app.get('/jobs/:id', async (req, reply) => {
