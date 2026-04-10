@@ -15,7 +15,7 @@ export interface CompressOutput {
   error: string | null
 }
 
-export type ImageStatus = 'pending' | 'compressing' | 'done' | 'error'
+export type ImageStatus = 'uploading' | 'pending' | 'compressing' | 'done' | 'error'
 
 export interface ImageEntry {
   filename: string
@@ -36,4 +36,5 @@ export interface Job {
   images: ImageEntry[]
   createdAt: number
   zipPath: string | null
+  finalized: boolean
 }
